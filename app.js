@@ -4,76 +4,43 @@ window.addEventListener('load', () => {
     let temperatureDescription = document.querySelector('.temperature-description');
     let temperatureDegree = document.querySelector('.temperature-degree');
     let locationTimezone = document.querySelector('.location-timezone');
-    let temperatureSection = document.querySelector('.temperature');
-    const temperatureSpan = document.querySelector('.temperature span');
+    let humidityLevel = document.querySelector('.humidity-level');
+    let windSpeed = document.querySelector('.wind-section');
+    let locationIcon = document.querySelector('.weather-icon');
 
     if(navigator.geolocation){
         navigator.geolocation.getCurrentPosition(position => {
             long = position.coords.longitude;
             lat = position.coords.latitude;
+
+            const API_KEY = `5e5a5506b41c63f1169fc55236d4e0da`;
+            const proxy = `https://cors-anywhere.herokuapp.com/`;
+            const api = `${proxy}https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${long}&appid=${API_KEY}&units=metric`
             
-            // const api = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&hourly=temperature_2m&current=current_weather`;
-             const api = `https://api.open-meteo.com/v1/gem?latitude=${lat}&longitude=${long}&hourly=temperature_2m&current_weather=true`;
             fetch(api)
             .then(response => {
                 return response.json();
             })
             .then(data => {
                 console.log(data);
-                const {temperature_2m} = data.hourly;
-                const {weathercode} = data.current_weather;
+                const {temp, humidity} = data.main;
+                const {description, icon} = data.weather[0];
+                const {name} = data;
+                const {deg, speed} = data.wind;
                 // set DOM elements from the API
-                // tempatureDegree.textContent = temperature_2m[0];
-                temperatureDegree.textContent = temperature_2m[0];
-                temperatureDescription.textContent = weathercode;
-                // weather codes for different conditions
-                if (weathercode === 0){
-                    temperatureDescription.textContent = "Clear Sky"
-                } else if (weathercode === 1){
-                    temperatureDescription.textContent = "Mainly Clear"
-                } else if (weathercode === 2){
-                    temperatureDescription.textContent = "Partly Cloudy"
-                } else if (weathercode === 3) {
-                    temperatureDescription.textContent = "overcast"
-                } else if (weathercode === 45 || weathercode === 48) {
-                    temperatureDescription.textContent = "fog"
-                } else if (weathercode === 51 || weathercode === 53 ||
-                    weathercode === 55) {
-                    temperatureDescription.textContent = "Drizzling rain"
-                } else if (weathercode === 56 || weathercode === 57){
-                    temperatureDescription.textContent = "freezing drizzle"
-                } else if (weathercode === 61 || weathercode === 63 ||
-                     weathercode === 65) {
-                    temperatureDescription.textContent = "Rain"
-                } else if (weathercode === 66 || weathercode === 67){
-                    temperatureDescription.textContent = "Freezeing Rain"
-                } else if (weathercode === 71 || weathercode === 73 ||
-                     weathercode === 75 || weathercode === 77) {
-                    temperatureDescription.textContent = "Snowfall"
-                } else if (weathercode === 80 || weathercode === 81 ||
-                      weathercode === 82) {
-                        temperatureDescription.textContent = "Rain Showers"
-                } else if (weathercode === 85 || weathercode === 86) {
-                    temperatureDescription.textContent = "Snow Showers"
-                } else if (weathercode === 95) {
-                    temperatureDescription.textContent = "Thunderstorm"
-                } else if (weathercode === 96 || weathercode === 99) 
-                    temperatureDescription.textContent = "Thunderstorm With Hail"
-            
+                temperatureDegree.textContent = temp;
+                humidityLevel.textContent = `Humidity Level: ${humidity}%`;
+                temperatureDescription.textContent = description;
+                locationTimezone.textContent = name;
+                windSpeed.textContent = `Wind: ${degToCompass(deg)} at ${speed} Km/Hr `;
+                locationIcon.innerHTML = `<img alt='icon' src="icons/${icon}.png">`;
 
-                // forumla for celcius
-                let celsius = (temperature_2m[0] - 32) * (5 / 9);
-                // Change temperature to Celcius/Fahrenheit
-                temperatureSection.addEventListener('click', () => {
-                    if(temperatureSpan.textContent === "F"){
-                        temperatureSpan.textContent = "C";
-                        temperatureDegree.textContent = Math.floor(celsius);
-                    } else {
-                        temperatureSpan.textContent = "F";
-                        temperatureDegree.textContent = temperature_2m[0]
-                    }
-                })
-        
+                
+                function degToCompass(deg) {
+                    var val = Math.floor((deg / 22.5) + 0.5);
+                    var arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+                    return arr[(val % 16)];
+                }
             });
         });
     } else {
